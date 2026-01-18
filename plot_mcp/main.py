@@ -5,11 +5,9 @@ import uuid
 from typing import Optional, Union
 from fastmcp import FastMCP
 from .models import (
-    LineData, LineConfig, ScatterData, ScatterConfig,
-    BarData, BarConfig, AreaData, AreaConfig,
-    HistogramData, HistogramConfig, BoxData, BoxConfig,
-    HeatmapData, HeatmapConfig, ContourData, ContourConfig,
-    PieData, PieConfig, PlotOutput
+    LineParams, ScatterParams, BarParams, AreaParams,
+    HistogramParams, BoxParams, HeatmapParams, ContourParams,
+    PieParams, PlotOutput
 )
 from .renderer import (
     render_line, render_scatter, render_bar, render_area,
@@ -22,7 +20,7 @@ mcp = FastMCP("PlotMCP")
 # Global configuration for output directory
 OUTPUT_DIR: Optional[str] = None
 
-def save_svg_and_update_output(output: PlotOutput, tool_name: str, config):
+def save_svg_and_update_output(output: PlotOutput, tool_name: str, title: str = None):
     """Save SVG to file and return formatted path if OUTPUT_DIR is configured, otherwise keep SVG content."""
     if not OUTPUT_DIR:
         return output
@@ -31,7 +29,7 @@ def save_svg_and_update_output(output: PlotOutput, tool_name: str, config):
     
     # Generate a filename
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    title_slug = "".join(c if c.isalnum() else "_" for c in (config.title or ""))[:30]
+    title_slug = "".join(c if c.isalnum() else "_" for c in (title or ""))[:30]
     filename = f"{tool_name}_{timestamp}_{title_slug or uuid.uuid4().hex[:8]}.svg"
     filepath = os.path.join(OUTPUT_DIR, filename)
     
@@ -42,58 +40,138 @@ def save_svg_and_update_output(output: PlotOutput, tool_name: str, config):
     return f"```local_image\n{filepath}\n```"
 
 @mcp.tool()
-def plot_line(data: LineData, config: LineConfig = LineConfig()) -> Union[PlotOutput, str]:
-    """Render one or more continuous 2D lines. Returns file path if output-dir is configured."""
-    res = render_line(data, config)
-    return save_svg_and_update_output(res, "line", config)
+def plot_line(params: LineParams) -> Union[PlotOutput, str]:
+    """Render one or more continuous 2D lines. Simple flat parameters - no nested objects!
+    
+    Example:
+    {
+        "series": [{"name": "Line 1", "x": [1, 2, 3], "y": [1, 4, 9]}],
+        "title": "My Plot",
+        "width": 800,
+        "height": 400
+    }
+    """
+    res = render_line(params)
+    return save_svg_and_update_output(res, "line", params.title)
 
 @mcp.tool()
-def plot_scatter(data: ScatterData, config: ScatterConfig = ScatterConfig()) -> Union[PlotOutput, str]:
-    """Render discrete 2D points. Returns file path if output-dir is configured."""
-    res = render_scatter(data, config)
-    return save_svg_and_update_output(res, "scatter", config)
+def plot_scatter(params: ScatterParams) -> Union[PlotOutput, str]:
+    """Render discrete 2D points. Simple flat parameters - no nested objects!
+    
+    Example:
+    {
+        "x": [1, 2, 3, 4],
+        "y": [1, 4, 9, 16],
+        "title": "Scatter Plot",
+        "color": "steelblue"
+    }
+    """
+    res = render_scatter(params)
+    return save_svg_and_update_output(res, "scatter", params.title)
 
 @mcp.tool()
-def plot_bar(data: BarData, config: BarConfig = BarConfig()) -> Union[PlotOutput, str]:
-    """Render categorical bar chart. Returns file path if output-dir is configured."""
-    res = render_bar(data, config)
-    return save_svg_and_update_output(res, "bar", config)
+def plot_bar(params: BarParams) -> Union[PlotOutput, str]:
+    """Render categorical bar chart. Simple flat parameters - no nested objects!
+    
+    Example:
+    {
+        "categories": ["A", "B", "C"],
+        "values": [10, 20, 15],
+        "title": "Bar Chart",
+        "orientation": "vertical"
+    }
+    """
+    res = render_bar(params)
+    return save_svg_and_update_output(res, "bar", params.title)
 
 @mcp.tool()
-def plot_area(data: AreaData, config: AreaConfig = AreaConfig()) -> Union[PlotOutput, str]:
-    """Render filled area under a curve. Returns file path if output-dir is configured."""
-    res = render_area(data, config)
-    return save_svg_and_update_output(res, "area", config)
+def plot_area(params: AreaParams) -> Union[PlotOutput, str]:
+    """Render filled area under a curve. Simple flat parameters - no nested objects!
+    
+    Example:
+    {
+        "x": [1, 2, 3, 4],
+        "y": [1, 4, 9, 16],
+        "title": "Area Plot",
+        "fill_color": "steelblue"
+    }
+    """
+    res = render_area(params)
+    return save_svg_and_update_output(res, "area", params.title)
 
 @mcp.tool()
-def plot_histogram(data: HistogramData, config: HistogramConfig = HistogramConfig()) -> Union[PlotOutput, str]:
-    """Render 1D histogram. Returns file path if output-dir is configured."""
-    res = render_histogram(data, config)
-    return save_svg_and_update_output(res, "histogram", config)
+def plot_histogram(params: HistogramParams) -> Union[PlotOutput, str]:
+    """Render 1D histogram. Simple flat parameters - no nested objects!
+    
+    Example:
+    {
+        "values": [1, 2, 2, 3, 3, 3, 4, 4, 5],
+        "bins": 5,
+        "title": "Histogram"
+    }
+    """
+    res = render_histogram(params)
+    return save_svg_and_update_output(res, "histogram", params.title)
 
 @mcp.tool()
-def plot_box(data: BoxData, config: BoxConfig = BoxConfig()) -> Union[PlotOutput, str]:
-    """Render box plot from raw values. Returns file path if output-dir is configured."""
-    res = render_box(data, config)
-    return save_svg_and_update_output(res, "box", config)
+def plot_box(params: BoxParams) -> Union[PlotOutput, str]:
+    """Render box plot from raw values. Simple flat parameters - no nested objects!
+    
+    Example:
+    {
+        "groups": [
+            {"name": "Group A", "values": [1, 2, 3, 4, 5]},
+            {"name": "Group B", "values": [2, 3, 4, 5, 6]}
+        ],
+        "title": "Box Plot"
+    }
+    """
+    res = render_box(params)
+    return save_svg_and_update_output(res, "box", params.title)
 
 @mcp.tool()
-def plot_heatmap(data: HeatmapData, config: HeatmapConfig = HeatmapConfig()) -> Union[PlotOutput, str]:
-    """Render 2D matrix as color grid. Returns file path if output-dir is configured."""
-    res = render_heatmap(data, config)
-    return save_svg_and_update_output(res, "heatmap", config)
+def plot_heatmap(params: HeatmapParams) -> Union[PlotOutput, str]:
+    """Render 2D matrix as color grid. Simple flat parameters - no nested objects!
+    
+    Example:
+    {
+        "matrix": [[1, 2, 3], [4, 5, 6], [7, 8, 9]],
+        "x_labels": ["X1", "X2", "X3"],
+        "y_labels": ["Y1", "Y2", "Y3"],
+        "title": "Heatmap"
+    }
+    """
+    res = render_heatmap(params)
+    return save_svg_and_update_output(res, "heatmap", params.title)
 
 @mcp.tool()
-def plot_contour(data: ContourData, config: ContourConfig = ContourConfig()) -> Union[PlotOutput, str]:
-    """Render 2D contour lines from grid data. Returns file path if output-dir is configured."""
-    res = render_contour(data, config)
-    return save_svg_and_update_output(res, "contour", config)
+def plot_contour(params: ContourParams) -> Union[PlotOutput, str]:
+    """Render 2D contour lines from grid data. Simple flat parameters - no nested objects!
+    
+    Example:
+    {
+        "x": [1, 2, 3],
+        "y": [1, 2, 3],
+        "z": [[1, 2, 3], [4, 5, 6], [7, 8, 9]],
+        "title": "Contour Plot"
+    }
+    """
+    res = render_contour(params)
+    return save_svg_and_update_output(res, "contour", params.title)
 
 @mcp.tool()
-def plot_pie(data: PieData, config: PieConfig = PieConfig()) -> Union[PlotOutput, str]:
-    """Render circular pie chart. Returns file path if output-dir is configured."""
-    res = render_pie(data, config)
-    return save_svg_and_update_output(res, "pie", config)
+def plot_pie(params: PieParams) -> Union[PlotOutput, str]:
+    """Render circular pie chart. Simple flat parameters - no nested objects!
+    
+    Example:
+    {
+        "labels": ["A", "B", "C"],
+        "values": [30, 50, 20],
+        "title": "Pie Chart"
+    }
+    """
+    res = render_pie(params)
+    return save_svg_and_update_output(res, "pie", params.title)
 
 @click.command()
 @click.option("--output-dir", type=click.Path(), help="Directory to save generated SVG files.")
