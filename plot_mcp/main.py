@@ -2,7 +2,7 @@ import os
 import click
 import datetime
 import uuid
-from typing import Optional
+from typing import Optional, Union
 from fastmcp import FastMCP
 from .models import (
     LineData, LineConfig, ScatterData, ScatterConfig,
@@ -22,8 +22,8 @@ mcp = FastMCP("PlotMCP")
 # Global configuration for output directory
 OUTPUT_DIR: Optional[str] = None
 
-def save_svg_and_update_output(output: PlotOutput, tool_name: str, config) -> PlotOutput:
-    """Save SVG to file and return path if OUTPUT_DIR is configured, otherwise keep SVG content."""
+def save_svg_and_update_output(output: PlotOutput, tool_name: str, config):
+    """Save SVG to file and return formatted path if OUTPUT_DIR is configured, otherwise keep SVG content."""
     if not OUTPUT_DIR:
         return output
     
@@ -38,60 +38,59 @@ def save_svg_and_update_output(output: PlotOutput, tool_name: str, config) -> Pl
     with open(filepath, "w", encoding="utf-8") as f:
         f.write(output.svg or "")
     
-    output.svg_path = filepath
-    output.svg = None  # Remove SVG content from response to LLM
-    return output
+    # Return formatted string for client to parse and display
+    return f"```local_image\n{filepath}\n```"
 
 @mcp.tool()
-def plot_line(data: LineData, config: LineConfig = LineConfig()) -> PlotOutput:
+def plot_line(data: LineData, config: LineConfig = LineConfig()) -> Union[PlotOutput, str]:
     """Render one or more continuous 2D lines. Returns file path if output-dir is configured."""
     res = render_line(data, config)
     return save_svg_and_update_output(res, "line", config)
 
 @mcp.tool()
-def plot_scatter(data: ScatterData, config: ScatterConfig = ScatterConfig()) -> PlotOutput:
+def plot_scatter(data: ScatterData, config: ScatterConfig = ScatterConfig()) -> Union[PlotOutput, str]:
     """Render discrete 2D points. Returns file path if output-dir is configured."""
     res = render_scatter(data, config)
     return save_svg_and_update_output(res, "scatter", config)
 
 @mcp.tool()
-def plot_bar(data: BarData, config: BarConfig = BarConfig()) -> PlotOutput:
+def plot_bar(data: BarData, config: BarConfig = BarConfig()) -> Union[PlotOutput, str]:
     """Render categorical bar chart. Returns file path if output-dir is configured."""
     res = render_bar(data, config)
     return save_svg_and_update_output(res, "bar", config)
 
 @mcp.tool()
-def plot_area(data: AreaData, config: AreaConfig = AreaConfig()) -> PlotOutput:
+def plot_area(data: AreaData, config: AreaConfig = AreaConfig()) -> Union[PlotOutput, str]:
     """Render filled area under a curve. Returns file path if output-dir is configured."""
     res = render_area(data, config)
     return save_svg_and_update_output(res, "area", config)
 
 @mcp.tool()
-def plot_histogram(data: HistogramData, config: HistogramConfig = HistogramConfig()) -> PlotOutput:
+def plot_histogram(data: HistogramData, config: HistogramConfig = HistogramConfig()) -> Union[PlotOutput, str]:
     """Render 1D histogram. Returns file path if output-dir is configured."""
     res = render_histogram(data, config)
     return save_svg_and_update_output(res, "histogram", config)
 
 @mcp.tool()
-def plot_box(data: BoxData, config: BoxConfig = BoxConfig()) -> PlotOutput:
+def plot_box(data: BoxData, config: BoxConfig = BoxConfig()) -> Union[PlotOutput, str]:
     """Render box plot from raw values. Returns file path if output-dir is configured."""
     res = render_box(data, config)
     return save_svg_and_update_output(res, "box", config)
 
 @mcp.tool()
-def plot_heatmap(data: HeatmapData, config: HeatmapConfig = HeatmapConfig()) -> PlotOutput:
+def plot_heatmap(data: HeatmapData, config: HeatmapConfig = HeatmapConfig()) -> Union[PlotOutput, str]:
     """Render 2D matrix as color grid. Returns file path if output-dir is configured."""
     res = render_heatmap(data, config)
     return save_svg_and_update_output(res, "heatmap", config)
 
 @mcp.tool()
-def plot_contour(data: ContourData, config: ContourConfig = ContourConfig()) -> PlotOutput:
+def plot_contour(data: ContourData, config: ContourConfig = ContourConfig()) -> Union[PlotOutput, str]:
     """Render 2D contour lines from grid data. Returns file path if output-dir is configured."""
     res = render_contour(data, config)
     return save_svg_and_update_output(res, "contour", config)
 
 @mcp.tool()
-def plot_pie(data: PieData, config: PieConfig = PieConfig()) -> PlotOutput:
+def plot_pie(data: PieData, config: PieConfig = PieConfig()) -> Union[PlotOutput, str]:
     """Render circular pie chart. Returns file path if output-dir is configured."""
     res = render_pie(data, config)
     return save_svg_and_update_output(res, "pie", config)
