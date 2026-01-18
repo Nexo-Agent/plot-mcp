@@ -1,0 +1,21 @@
+[project]
+name = "plot-mcp"
+version = "0.1.0"
+description = "FastMCP server for generating plots"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastmcp>=0.4.1",
+    "matplotlib>=3.8.0",
+    "click>=8.1.0",
+]
+
+[project.scripts]
+plot-mcp = "plot_mcp.main:main"
+
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
